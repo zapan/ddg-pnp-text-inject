@@ -108,7 +108,7 @@ def add_section_to_elf(elf_file, section_name, content_data, output_file):
     section.virtual_address = section_vma
     binary.write(output_file)
 
-    print("Section added successfully to", output_file, "VMA", section_vma)
+    print("Section added successfully to", output_file, "VMA", section_vma, "Size", new_section.size)
     return section_vma
 
 
@@ -121,6 +121,7 @@ def updates_symbols_references(output_file, section_vma, content_data, rva, entr
         modify_symbol_pointer(output_file, symbol_address, data_address)
         data_offset += len(data)
         symbol_offset += entry_size
+        print("Updated symbol at address ", symbol_address, "to point at VMA", data_address, "file offset", data_address - 0x8000)
 
 
 def text_inject(input_file, content_file, output_file):
@@ -131,7 +132,7 @@ def text_inject(input_file, content_file, output_file):
     lectdat_entry_size = 0x50
     updates_symbols_references(output_file, section_vma, lect_content_data, lectdat_rva, lectdat_entry_size)
 
-    lsmenu_rva = 0x5B8B7C
+    lsmenu_rva = 0x005B8B7C
     lsmenu_rva_entry_size = 0xc
 
 

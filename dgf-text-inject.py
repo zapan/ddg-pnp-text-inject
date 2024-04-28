@@ -96,7 +96,6 @@ def add_section_to_elf(elf_file, section_name, content_data, output_file):
     new_section.alignment = 8
     new_section.content = bytearray_fusionado
     new_section.size = len(new_section.content)
-    new_section.virtual_address = 9601024
 
     # Add the new section to the binary
     binary.add(new_section)
@@ -104,15 +103,36 @@ def add_section_to_elf(elf_file, section_name, content_data, output_file):
     # Save the modified binary to the output file
     binary.write(output_file)
 
-    print("Section added successfully to", output_file)
+    section = binary.get_section(".trans")
+    section_vma = section.file_offset + 0x8000
+    section.virtual_address = section_vma
+    binary.write(output_file)
+
+    print("Section added successfully to", output_file, "VMA", section_vma)
+    return section_vma
+
+
+def updates_symbols_references(output_file, section_vma, content_data, rva, entry_size):
+    data_offset = 0
+    symbol_offset = 0
+    for data in content_data:
+        data_address = section_vma + data_offset
+        symbol_address = rva + symbol_offset
+        modify_symbol_pointer(output_file, symbol_address, data_address)
+        data_offset += len(data)
+        symbol_offset += entry_size
 
 
 def text_inject(input_file, content_file, output_file):
-    content_data = convertir_a_bytearray_con_padding(content_file)
-    add_section_to_elf(input_file, ".trans", content_data, output_file)
-    posicion = 0x005A87FC
-    nuevo_valor = 0x0042afc8
-    modify_symbol_pointer(output_file, posicion, nuevo_valor)
+    lect_content_data = convertir_a_bytearray_con_padding(content_file)
+    section_vma = add_section_to_elf(input_file, ".trans", lect_content_data, output_file)
+
+    lectdat_rva = 0x005A87FC
+    lectdat_entry_size = 0x50
+    updates_symbols_references(output_file, section_vma, lect_content_data, lectdat_rva, lectdat_entry_size)
+
+    lsmenu_rva = 0x5B8B7C
+    lsmenu_rva_entry_size = 0xc
 
 
 if __name__ == "__main__":

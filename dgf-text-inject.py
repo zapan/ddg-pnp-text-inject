@@ -1,6 +1,33 @@
 import sys
 import lief
-import chardet
+
+
+def print_symbols_in_section(file_path, section_name):
+    # Cargar el archivo binario
+    binary = lief.ELF.parse(file_path)
+
+    # Obtener la sección deseada
+    section = binary.get_section(section_name)
+    if section is None:
+        print(f"La sección '{section_name}' no fue encontrada.")
+        return
+
+    # Obtener los símbolos y filtrar los que pertenecen a la sección
+    section_symbols = []
+    for symbol in binary.symbols:
+        if symbol.section and symbol.section.name == section_name:
+            # if symbol.shndx == 15
+            if 0x00426318 <= symbol.value <= 0x004295C8:
+                section_symbols.append(symbol)
+
+    if not section_symbols:
+        print(f"No hay símbolos en la sección '{section_name}'.")
+        return
+
+    # Imprimir los símbolos
+    print(f"Símbolos en la sección '{section_name}':")
+    for symbol in section_symbols:
+        print(symbol.name)
 
 
 def print_string_hex(string, encoding='utf-8'):
@@ -23,7 +50,9 @@ def print_string_hex(string, encoding='utf-8'):
 
 def utf8_a_shiftjis(string_utf8):
     encoding = 'cp932'
+    encoding = 'shift_jis'
     # print_string_hex(string_utf8)
+    # print(string_utf8)
     string_utf8 = string_utf8.encode()
     string_shiftjis = string_utf8.decode('utf-8').encode(encoding)
     # print_string_hex(string_shiftjis, encoding)
@@ -40,6 +69,9 @@ def convertir_a_bytearray_con_padding(archivo_entrada):
         for linea in archivo:
             # Eliminar espacios en blanco al principio y al final de la línea
             linea = linea.strip()
+            linea = linea.replace('＇', '')
+            linea = linea.replace('＂', '')
+            linea = linea.replace('－', '')
             string_shift_jis = utf8_a_shiftjis(linea)
 
             # Convertir la línea a bytearray
@@ -121,16 +153,21 @@ def updates_symbols_references(output_file, section_vma, content_data, rva, entr
         modify_symbol_pointer(output_file, symbol_address, data_address)
         data_offset += len(data)
         symbol_offset += entry_size
-        print("Updated symbol at address ", symbol_address, "to point at VMA", data_address, "file offset", data_address - 0x8000)
+        # print("Updated symbol at address ", symbol_address, "to point at VMA", data_address, "file offset", data_address - 0x8000)
 
 
 def text_inject(input_file, content_file, output_file):
+    # print_symbols_in_section(input_file, ".rodata")
     lect_content_data = convertir_a_bytearray_con_padding(content_file)
     section_vma = add_section_to_elf(input_file, ".trans", lect_content_data, output_file)
 
     lectdat_rva = 0x005A87FC
     lectdat_entry_size = 0x50
     updates_symbols_references(output_file, section_vma, lect_content_data, lectdat_rva, lectdat_entry_size)
+
+    # print_symbols_in_section(output_file, ".rodata")
+    # print_symbols_in_section(output_file, ".data")
+    # print_symbols_in_section(output_file, ".trans")
 
     lsmenu_rva = 0x005B8B7C
     lsmenu_rva_entry_size = 0xc

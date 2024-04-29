@@ -69,9 +69,11 @@ def utf8_a_shiftjis(string_utf8):
         print(e, "error", before)
         sys.exit()
 
-    x = len(string_utf8)
     z = len(string_shiftjis)
-    print("UTF8 Len", str(x).zfill(3), ", SJIS Len", str(z).zfill(3), "CONTENT:", before)
+    if z >= 265:
+        print("String exceeds maximum length 265. Shift-JIS length is", str(z).zfill(3), "| CONTENT:", before)
+
+        # print("SJIS Len", str(z).zfill(3), "| CONTENT:", before)
     # print_string_hex(string_utf8)
     # print_string_hex(string_shiftjis, encoding)
     return string_shiftjis

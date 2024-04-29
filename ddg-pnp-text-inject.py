@@ -225,9 +225,8 @@ def text_inject(input_file, output_file, lect_file, ls_menu_file):
     magic_bytes_off = find_magic_bytes(output_file, "01000000 C8AF4200")
     if magic_bytes_off > -1:
         # 0x5C8B78 = 0x5B8B78 + 0x10000 (64k)
-        print("Magic bytes 01000000 C8AF4200 found at", hex(magic_bytes_off))
         ls_menu_rva = magic_bytes_off + 4
-        print("Starts at", hex(ls_menu_rva))
+        print("Magic bytes 01000000 C8AF4200 found at", hex(magic_bytes_off), "Starts at", hex(ls_menu_rva))
         ls_menu_entry_size = 0xc
         ls_menu_section_vma = ls_menu_section_offset + 0x8000
         updates_symbols_references(output_file, ls_menu_section_vma, ls_menu_content_data, ls_menu_rva, ls_menu_entry_size)

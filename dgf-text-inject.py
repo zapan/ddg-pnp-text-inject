@@ -1,7 +1,6 @@
 import os
 import sys
 import lief
-import subprocess
 
 
 def print_symbols_in_section(file_path, section_name):
@@ -175,17 +174,26 @@ def overwrite_section(output_file, content_data, offset):
         archivo_destino.write(bytearray_fusionado)
 
 
-def setup_elf_padding(output_file):
+def setup_elf_padding(input_file, output_file):
     path = os.path.dirname(os.path.abspath(output_file))
-    command = "cd " + path + "/;"
-    command += "cp dgf_rodata dgf_rodata_padding;"
-    command += "dd if=/dev/zero count=128 >> dgf_rodata_padding;"
-    command += "arm-none-eabi-objcopy --input-target elf32-littlearm --output-target elf32-littlearm --update-section .rodata=dgf_rodata_padding dgf dgf_patched"
-    os.system(command)
+    rodata_pad = path + "/dgf_rodata_padded"
+    command = ""
+    if not os.path.exists(rodata_pad):
+        command += 'arm-none-eabi-objdump -h ' + input_file + '| grep .rodata | awk \'{print "dd if=' + input_file + ' of=' + rodata_pad + ' bs=1 count=$((0x"$3")) skip=$((0x"$6"))"}\' | bash ;'
+        command += "dd if=/dev/zero count=128 >> " + rodata_pad + ";"
+
+    command += "arm-none-eabi-objcopy --input-target elf32-littlearm --output-target elf32-littlearm --update-section .rodata=" + rodata_pad + " " + input_file + " " + output_file
+    print(command)
+    out = os.system(command)
+    if out != 0:
+        print("Unable to setup rodata padding in " + output_file)
+        sys.exit()
+
+    print("Padded rodata in " + output_file)
 
 
 def text_inject(input_file, content_file, output_file):
-    setup_elf_padding(output_file)
+    setup_elf_padding(input_file, output_file)
 
     # print_symbols_in_section(input_file, ".rodata")
     lect_content_data = convertir_a_bytearray_con_padding(content_file)
@@ -219,4 +227,4 @@ if __name__ == "__main__":
         print("Usage: python add_section_to_elf.py <elf_file> <content_file> <output_file>")
     else:
         text_inject(sys.argv[1], sys.argv[2], sys.argv[3])
-        print("patched elf in ", sys.argv[3])
+        print("Text patched OK. Result in", sys.argv[3])

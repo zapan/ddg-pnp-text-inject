@@ -1,5 +1,7 @@
+import os
 import sys
 import lief
+import subprocess
 
 
 def print_symbols_in_section(file_path, section_name):
@@ -171,7 +173,18 @@ def overwrite_section(output_file, content_data, offset):
         archivo_destino.write(bytearray_fusionado)
 
 
+def setup_elf_padding(output_file):
+    path = os.path.dirname(os.path.abspath(output_file))
+    command = "cd " + path + "/;"
+    command += "cp dgf_rodata dgf_rodata_padding;"
+    command += "dd if=/dev/zero count=128 >> dgf_rodata_padding;"
+    command += "arm-none-eabi-objcopy --input-target elf32-littlearm --output-target elf32-littlearm --update-section .rodata=dgf_rodata_padding dgf dgf_patched"
+    os.system(command)
+
+
 def text_inject(input_file, content_file, output_file):
+    setup_elf_padding(output_file)
+
     # print_symbols_in_section(input_file, ".rodata")
     lect_content_data = convertir_a_bytearray_con_padding(content_file)
     # section_vma = add_section_to_elf(input_file, ".trans", lect_content_data, output_file)

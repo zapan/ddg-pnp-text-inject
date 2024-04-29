@@ -3,7 +3,7 @@ import sys
 import lief
 
 
-def print_symbols_in_section(file_path, section_name):
+def print_symbols_menu_in_section(file_path, section_name):
     # Cargar el archivo binario
     binary = lief.ELF.parse(file_path)
 
@@ -155,7 +155,7 @@ def add_section_to_elf(elf_file, section_name, content_data, output_file):
     return section_vma
 
 
-def updates_symbols_references(output_file, section_vma, content_data, rva, entry_size):
+def updates_symbols_menu_references(output_file, section_vma, content_data, rva, entry_size):
     data_offset = 0
     symbol_offset = 0
     for data in content_data:
@@ -192,39 +192,36 @@ def setup_elf_padding(input_file, output_file):
     print("Padded rodata in " + output_file)
 
 
-def text_inject(input_file, content_file, output_file):
+def text_inject(input_file, output_file, lect_file, ls_menu_file):
     setup_elf_padding(input_file, output_file)
+    lect_content_data = convertir_a_bytearray_con_padding(lect_file)
+    ls_menu_content_data = convertir_a_bytearray_con_padding(ls_menu_file)
 
-    # print_symbols_in_section(input_file, ".rodata")
-    lect_content_data = convertir_a_bytearray_con_padding(content_file)
-    # section_vma = add_section_to_elf(input_file, ".trans", lect_content_data, output_file)
+    lect_section_offset = 0x496DD0
+    overwrite_section(output_file, lect_content_data, lect_section_offset)
 
-    section_offset = 0x496DD0
-    section_vma = section_offset + 0x8000
-    overwrite_section(output_file, lect_content_data, section_offset)
+    ls_menu_section_offset = lect_section_offset + len(lect_content_data) + 0x100
+    overwrite_section(output_file, ls_menu_content_data, ls_menu_section_offset)
 
-    # D0ED4900
-
-    lectdat_entry_size = 0x50
     lectdat_rva1 = 0x5A87FC
     lectdat_rva2 = 0x5B87FC
+    lectdat_entry_size = 0x50
+    lect_section_vma = lect_section_offset + 0x8000
+    updates_symbols_menu_references(output_file, lect_section_vma, lect_content_data, lectdat_rva1, lectdat_entry_size)
+    updates_symbols_menu_references(output_file, lect_section_vma, lect_content_data, lectdat_rva2, lectdat_entry_size)
 
-    updates_symbols_references(output_file, section_vma, lect_content_data, lectdat_rva1, lectdat_entry_size)
-    updates_symbols_references(output_file, section_vma, lect_content_data, lectdat_rva2, lectdat_entry_size)
-
-    # print_symbols_in_section(output_file, ".rodata")
-    # print_symbols_in_section(output_file, ".data")
-    # print_symbols_in_section(output_file, ".trans")
-
-    lsmenu_rva = 0x005B8B7C
-    lsmenu_rva_entry_size = 0xc
+    ls_menu_rva1 = 0x005B8B7C
+    ls_menu_rva2 = 0x005B8B7C
+    ls_menu_rva_entry_size = 0xc
+    ls_menu_section_vma = ls_menu_section_offset + 0x8000
+    updates_symbols_menu_references(output_file, ls_menu_section_vma, ls_menu_content_data, ls_menu_rva1, ls_menu_rva_entry_size)
+    updates_symbols_menu_references(output_file, ls_menu_section_vma, ls_menu_content_data, ls_menu_rva2, ls_menu_rva_entry_size)
 
 
 if __name__ == "__main__":
     sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf8', buffering=1)
-    # utf8_a_shiftjis("~c 96,96,96$W2730$H2730$w13$h16Ｗｅｌｃｏｍｅ　ｔｏ　ｔｈｅ　~c 128,112,80ｉｎｔｒｏｄｕｃｔｏｒｙ$nｄｉａｇｒａｍ！~c 96,96,96Ｉ＇ｌｌ　ｂｅ　ｔｅａｃｈｉｎｇ　ｙｏｕ　ｈｏｗ$nｔｏ　ｄｒｉｖｅ　ｔｈｅ　ｔｒａｉｎ．　　")
-    if len(sys.argv) != 4:
-        print("Usage: python add_section_to_elf.py <elf_file> <content_file> <output_file>")
+    if len(sys.argv) != 5:
+        print("Usage: python ddg-pnp-text-inject.py <elf_source> <eld_patched> <lect_path> <menu_path>")
     else:
-        text_inject(sys.argv[1], sys.argv[2], sys.argv[3])
-        print("Text patched OK. Result in", sys.argv[3])
+        text_inject(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+        print("Text patched OK. Result in", sys.argv[2])

@@ -11,3 +11,7 @@ Requires [GNU Arm Embedded Toolchain Downloads](https://developer.arm.com/downlo
 Requires [pyelftools](https://pypi.org/project/pyelftools/)
 
 macOS or Linux system. Tested only on macOS
+
+Usage
+------------
+    > python ddg-pnp-text-inject.py <elf_source> <eld_patched> <lect_path> <menu_path>

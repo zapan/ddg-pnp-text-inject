@@ -155,7 +155,7 @@ def add_section_to_elf(elf_file, section_name, content_data, output_file):
     return section_vma
 
 
-def updates_symbols_menu_references(output_file, section_vma, content_data, rva, entry_size):
+def updates_symbols_references(output_file, section_vma, content_data, rva, entry_size):
     data_offset = 0
     symbol_offset = 0
     for data in content_data:
@@ -210,12 +210,12 @@ def text_inject(input_file, output_file, lect_file, ls_menu_file):
     lectdat_rva = 0x5B87FC  # 0x5A87FC + 0x10000 (64k)
     lectdat_entry_size = 0x50
     lect_section_vma = lect_section_offset + 0x8000
-    updates_symbols_menu_references(output_file, lect_section_vma, lect_content_data, lectdat_rva, lectdat_entry_size)
+    updates_symbols_references(output_file, lect_section_vma, lect_content_data, lectdat_rva, lectdat_entry_size)
 
     ls_menu_rva = 0x5C8B80  # 0x5B8B80 + 0x10000 (64k)
     ls_menu_entry_size = 0xc
     ls_menu_section_vma = ls_menu_section_offset + 0x8000
-    updates_symbols_menu_references(output_file, ls_menu_section_vma, ls_menu_content_data, ls_menu_rva, ls_menu_entry_size)
+    updates_symbols_references(output_file, ls_menu_section_vma, ls_menu_content_data, ls_menu_rva, ls_menu_entry_size)
 
 
 if __name__ == "__main__":

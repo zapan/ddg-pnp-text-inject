@@ -185,7 +185,7 @@ def setup_elf_padding(input_file, output_file):
         command += "dd if=/dev/zero count=128 >> " + rodata_pad + ";"
 
     command += "arm-none-eabi-objcopy --input-target elf32-littlearm --output-target elf32-littlearm --update-section .rodata=" + rodata_pad + " " + input_file + " " + output_file
-    print(command)
+    # print(command)
     out = os.system(command)
     if out != 0:
         print("Unable to setup rodata padding in " + output_file)
@@ -204,8 +204,7 @@ def text_inject(input_file, output_file, lect_file, ls_menu_file):
 
     padding = 8
     padding_necesario = padding - (file_pointer % padding)
-
-    ls_menu_section_offset = file_pointer + padding_necesario + 256
+    ls_menu_section_offset = file_pointer + padding_necesario + 128
     overwrite_section(output_file, ls_menu_content_data, ls_menu_section_offset)
 
     lectdat_rva = 0x5B87FC  # 0x5A87FC + 0x10000 (64k)

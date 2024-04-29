@@ -10,7 +10,7 @@ def print_symbols_menu_in_section(file_path, section_name):
     # Obtener la sección deseada
     section = binary.get_section(section_name)
     if section is None:
-        print(f"La sección '{section_name}' no fue encontrada.")
+        print(f"Section '{section_name}' not found.")
         return
 
     # Obtener los símbolos y filtrar los que pertenecen a la sección
@@ -21,11 +21,11 @@ def print_symbols_menu_in_section(file_path, section_name):
                 section_symbols.append(symbol)
 
     if not section_symbols:
-        print(f"No hay símbolos en la sección '{section_name}'.")
+        print(f"No symbols in section '{section_name}'.")
         return
 
     # Imprimir los símbolos
-    print(f"Símbolos en la sección '{section_name}':")
+    print(f"Symbols in section '{section_name}':")
     for symbol in section_symbols:
         print(symbol.name)
 

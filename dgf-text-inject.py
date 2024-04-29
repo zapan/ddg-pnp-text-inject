@@ -51,10 +51,26 @@ def print_string_hex(string, encoding='utf-8'):
 def utf8_a_shiftjis(string_utf8):
     encoding = 'cp932'
     encoding = 'shift_jis'
-    # print_string_hex(string_utf8)
-    print(string_utf8)
+
+    string_utf8 = string_utf8.strip()
+    string_utf8 = string_utf8.replace('＇', '')
+    string_utf8 = string_utf8.replace('＂', '')
+    string_utf8 = string_utf8.replace('－', '')
+
+    before = string_utf8
+
     string_utf8 = string_utf8.encode()
-    string_shiftjis = string_utf8.decode('utf-8').encode(encoding)
+
+    try:
+        string_shiftjis = string_utf8.decode('utf-8').encode(encoding)
+    except UnicodeEncodeError as e:
+        print(e, "error", before)
+        sys.exit()
+
+    x = len(string_utf8)
+    z = len(string_shiftjis)
+    print("UTF8 Len", str(x).zfill(3), ", SJIS Len", str(z).zfill(3), "CONTENT:", before)
+    # print_string_hex(string_utf8)
     # print_string_hex(string_shiftjis, encoding)
     return string_shiftjis
 
@@ -68,10 +84,6 @@ def convertir_a_bytearray_con_padding(archivo_entrada):
         # Leer cada línea del archivo
         for linea in archivo:
             # Eliminar espacios en blanco al principio y al final de la línea
-            linea = linea.strip()
-            linea = linea.replace('＇', '')
-            linea = linea.replace('＂', '')
-            linea = linea.replace('－', '')
             string_shift_jis = utf8_a_shiftjis(linea)
 
             # Convertir la línea a bytearray

@@ -52,7 +52,7 @@ def utf8_a_shiftjis(string_utf8):
     encoding = 'cp932'
     encoding = 'shift_jis'
     # print_string_hex(string_utf8)
-    # print(string_utf8)
+    print(string_utf8)
     string_utf8 = string_utf8.encode()
     string_shiftjis = string_utf8.decode('utf-8').encode(encoding)
     # print_string_hex(string_shiftjis, encoding)
@@ -112,10 +112,6 @@ def fusionar_bytearrays(lista_bytearrays):
 
 
 def add_section_to_elf(elf_file, section_name, content_data, output_file):
-    # # Read content file
-    # with open(content_file, 'rb') as content:
-    #     content_data = content.read()
-
     bytearray_fusionado = fusionar_bytearrays(content_data)
 
     # Open the original ELF file
@@ -156,14 +152,30 @@ def updates_symbols_references(output_file, section_vma, content_data, rva, entr
         # print("Updated symbol at address ", symbol_address, "to point at VMA", data_address, "file offset", data_address - 0x8000)
 
 
+def overwrite_section(output_file, content_data, offset):
+    bytearray_fusionado = fusionar_bytearrays(content_data)
+    with open(output_file, 'r+b') as archivo_destino:
+        archivo_destino.seek(offset)
+        archivo_destino.write(bytearray_fusionado)
+
+
 def text_inject(input_file, content_file, output_file):
     # print_symbols_in_section(input_file, ".rodata")
     lect_content_data = convertir_a_bytearray_con_padding(content_file)
-    section_vma = add_section_to_elf(input_file, ".trans", lect_content_data, output_file)
+    # section_vma = add_section_to_elf(input_file, ".trans", lect_content_data, output_file)
 
-    lectdat_rva = 0x005A87FC
+    section_offset = 0x496DD0
+    section_vma = section_offset + 0x8000
+    overwrite_section(output_file, lect_content_data, section_offset)
+
+    # D0ED4900
+
     lectdat_entry_size = 0x50
-    updates_symbols_references(output_file, section_vma, lect_content_data, lectdat_rva, lectdat_entry_size)
+    lectdat_rva1 = 0x5A87FC
+    lectdat_rva2 = 0x5B87FC
+
+    updates_symbols_references(output_file, section_vma, lect_content_data, lectdat_rva1, lectdat_entry_size)
+    updates_symbols_references(output_file, section_vma, lect_content_data, lectdat_rva2, lectdat_entry_size)
 
     # print_symbols_in_section(output_file, ".rodata")
     # print_symbols_in_section(output_file, ".data")

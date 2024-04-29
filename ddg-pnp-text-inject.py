@@ -17,7 +17,6 @@ def print_symbols_menu_in_section(file_path, section_name):
     section_symbols = []
     for symbol in binary.symbols:
         if symbol.section and symbol.section.name == section_name:
-            # if symbol.shndx == 15
             if 0x00426318 <= symbol.value <= 0x004295C8:
                 section_symbols.append(symbol)
 

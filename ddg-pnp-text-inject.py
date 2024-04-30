@@ -53,9 +53,9 @@ def utf8_a_shiftjis(string_utf8):
     encoding = 'shift_jis'
 
     string_utf8 = string_utf8.strip()
-    string_utf8 = string_utf8.replace('＇', '')
-    string_utf8 = string_utf8.replace('＂', '')
-    string_utf8 = string_utf8.replace('－', '')
+    # string_utf8 = string_utf8.replace('＇', '')
+    # string_utf8 = string_utf8.replace('＂', '')
+    # string_utf8 = string_utf8.replace('－', '')
 
     before = string_utf8
 

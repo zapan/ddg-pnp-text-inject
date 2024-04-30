@@ -10,7 +10,7 @@ Requires [GNU Arm Embedded Toolchain Downloads](https://developer.arm.com/downlo
 
 Requires [pyelftools](https://pypi.org/project/pyelftools/)
 
-macOS or Linux system. Tested only on macOS
+Requires macOS or Linux system. Tested only on macOS.
 
 Usage
 ------------

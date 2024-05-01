@@ -236,5 +236,8 @@ if __name__ == "__main__":
     if len(sys.argv) != 5:
         print("Usage: python ddg-pnp-text-inject.py <elf_source> <eld_patched> <lect_path> <menu_path>")
     else:
-        text_inject(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
-        print("Text patched OK. Result in", sys.argv[2])
+        try:
+            text_inject(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+            print("Text patched OK. Result in", sys.argv[2])
+        except Error as e:
+            print(e)

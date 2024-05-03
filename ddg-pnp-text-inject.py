@@ -1,6 +1,5 @@
 import os
 import sys
-import lief
 
 
 def print_symbols_menu_in_section(file_path, section_name):

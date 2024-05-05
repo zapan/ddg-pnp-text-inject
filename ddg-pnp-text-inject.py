@@ -258,7 +258,7 @@ def text_inject(input_file, output_file, lect_file, ls_menu_file):
 
     padding = 8
     padding_necesario = padding - (file_pointer % padding)
-    ls_menu_section_offset = file_pointer + padding_necesario + 128
+    ls_menu_section_offset = file_pointer + padding_necesario + 168
     overwrite_section(output_file, ls_menu_content_data, ls_menu_section_offset)
 
     magic_bytes_off = find_magic_bytes(output_file, "0F000000 04000000 14000000 32000000 2A000000 3A000000 40010000 8A000000 01000000 18634200")

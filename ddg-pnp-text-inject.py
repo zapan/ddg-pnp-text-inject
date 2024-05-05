@@ -153,6 +153,28 @@ def add_section_to_elf(elf_file, section_name, content_data, output_file):
     return section_vma
 
 
+def get_section_end(elf_file, section_name):
+    command = 'arm-none-eabi-objdump -h ' + elf_file + '| grep ' + section_name + ' | awk \'{print "echo $((0x"$3")) $((0x"$6"))"}\' | bash > /tmp/section_info'
+    print(command)
+    out = os.system(command)
+    if out != 0:
+        print("Unable to find section" + section_name + "in" + elf_file)
+        sys.exit()
+
+    with open('/tmp/section_info', 'r') as file:
+        section_info = file.read()
+        size = int(section_info.split()[0].strip())
+        offset = int(section_info.split()[1].strip())
+        result = offset + size
+        print("Section ", section_name, "offset", offset, "size", size, "end", result)
+
+    if not result:
+        print("Unable to find section" + section_name + "in" + elf_file)
+        sys.exit()
+
+    return result
+
+
 def updates_symbols_references(output_file, section_vma, content_data, rva, entry_size):
     data_offset = 0
     symbol_offset = 0
@@ -231,7 +253,7 @@ def text_inject(input_file, output_file, lect_file, ls_menu_file):
     section_padding_size = calculate_needed_space_padded_to_1k(lect_content_data, ls_menu_content_data)
     setup_elf_padding(input_file, output_file, section_padding_size)
 
-    lect_section_offset = 0x496DD0
+    lect_section_offset = get_section_end(input_file, ".rodata") + 168  # 0x496DD0
     file_pointer = overwrite_section(output_file, lect_content_data, lect_section_offset)
 
     padding = 8

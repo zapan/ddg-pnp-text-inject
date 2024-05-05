@@ -174,15 +174,25 @@ def overwrite_section(output_file, content_data, offset):
     return current
 
 
-def setup_elf_padding(input_file, output_file):
+def add_end_padding(nombre_archivo, section_padding_size):
+    with open(nombre_archivo, 'rb+') as archivo:
+        archivo.seek(0, 2)
+        archivo.write(bytearray(section_padding_size))
+
+
+def setup_elf_padding(input_file, output_file, section_padding_size):
     path = os.path.dirname(os.path.abspath(output_file))
     rodata_pad = path + "/dgf_rodata_padded"
-    command = ""
-    if not os.path.exists(rodata_pad):
-        command += 'arm-none-eabi-objdump -h ' + input_file + '| grep .rodata | awk \'{print "dd if=' + input_file + ' of=' + rodata_pad + ' bs=1 count=$((0x"$3")) skip=$((0x"$6"))"}\' | bash ;'
-        command += "dd if=/dev/zero count=128 >> " + rodata_pad + ";"
+    command = 'arm-none-eabi-objdump -h ' + input_file + '| grep .rodata | awk \'{print "dd if=' + input_file + ' of=' + rodata_pad + ' bs=1 count=$((0x"$3")) skip=$((0x"$6"))"}\' | bash '
+    # print(command)
+    out = os.system(command)
+    if out != 0:
+        print("Unable to setup rodata padding in " + output_file)
+        sys.exit()
 
-    command += "arm-none-eabi-objcopy --input-target elf32-littlearm --output-target elf32-littlearm --update-section .rodata=" + rodata_pad + " " + input_file + " " + output_file
+    add_end_padding(rodata_pad, section_padding_size)
+
+    command = "arm-none-eabi-objcopy --input-target elf32-littlearm --output-target elf32-littlearm --update-section .rodata=" + rodata_pad + " " + input_file + " " + output_file
     # print(command)
     out = os.system(command)
     if out != 0:
@@ -202,10 +212,24 @@ def find_magic_bytes(archivo, secuencia):
     return offset
 
 
+def calculate_needed_space_padded_to_1k(lect_content_data, ls_menu_content_data):
+    size = 0
+    for element in lect_content_data:
+        size += len(element)
+    for element in ls_menu_content_data:
+        size += len(element)
+
+    padding = 1024
+    padding_necesario = padding - (size % padding)
+    size = size + padding_necesario + padding
+    return size
+
+
 def text_inject(input_file, output_file, lect_file, ls_menu_file):
-    setup_elf_padding(input_file, output_file)
     lect_content_data = convertir_a_bytearray_con_padding(lect_file)
     ls_menu_content_data = convertir_a_bytearray_con_padding(ls_menu_file)
+    section_padding_size = calculate_needed_space_padded_to_1k(lect_content_data, ls_menu_content_data)
+    setup_elf_padding(input_file, output_file, section_padding_size)
 
     lect_section_offset = 0x496DD0
     file_pointer = overwrite_section(output_file, lect_content_data, lect_section_offset)
@@ -215,16 +239,18 @@ def text_inject(input_file, output_file, lect_file, ls_menu_file):
     ls_menu_section_offset = file_pointer + padding_necesario + 128
     overwrite_section(output_file, ls_menu_content_data, ls_menu_section_offset)
 
-    lectdat_rva = 0x5B87FC  # 0x5A87FC + 0x10000 (64k)
-    lectdat_entry_size = 0x50
-    lect_section_vma = lect_section_offset + 0x8000
-    updates_symbols_references(output_file, lect_section_vma, lect_content_data, lectdat_rva, lectdat_entry_size)
-
-    magic_bytes_off = find_magic_bytes(output_file, "01000000 C8AF4200")
+    magic_bytes_off = find_magic_bytes(output_file, "0F000000 04000000 14000000 32000000 2A000000 3A000000 40010000 8A000000 01000000 18634200")
     if magic_bytes_off > -1:
-        # 0x5C8B78 = 0x5B8B78 + 0x10000 (64k)
-        ls_menu_rva = magic_bytes_off + 4
-        print("Magic bytes 01000000 C8AF4200 found at", hex(magic_bytes_off), "Starts at", hex(ls_menu_rva))
+        lectdat_rva = magic_bytes_off + (9 * 4)  # lectdat_rva = 0x5A87FC + section_padding_size
+        print("Magic bytes for tutorial texts found at", hex(magic_bytes_off), "Starts at", hex(lectdat_rva))
+        lectdat_entry_size = 0x50
+        lect_section_vma = lect_section_offset + 0x8000
+        updates_symbols_references(output_file, lect_section_vma, lect_content_data, lectdat_rva, lectdat_entry_size)
+
+    magic_bytes_off = find_magic_bytes(output_file, "01000000 C8AF4200 00000080")
+    if magic_bytes_off > -1:
+        ls_menu_rva = magic_bytes_off + 4  # 0x5C8B78 = 0x5B8B78 + section_padding_size
+        print("Magic bytes for menu texts found at", hex(magic_bytes_off), "Starts at", hex(ls_menu_rva))
         ls_menu_entry_size = 0xc
         ls_menu_section_vma = ls_menu_section_offset + 0x8000
         updates_symbols_references(output_file, ls_menu_section_vma, ls_menu_content_data, ls_menu_rva, ls_menu_entry_size)
